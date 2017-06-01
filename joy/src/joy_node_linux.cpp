@@ -1,164 +1,182 @@
-/*
- * teleop_pr2
- * Copyright (c) 2009, Willow Garage, Inc.
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the <ORGANIZATION> nor the names of its
- *       contributors may be used to endorse or promote products derived from
- *       this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+// Copyright (c) 2009, Willow Garage, Inc.
+// Copyright (c) 2017, Open Source Robotics Foundation, Inc.
+// All rights reserved.
+//
+// Software License Agreement (BSD License 2.0)
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//  * Neither the name of the Willow Garage nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
 
 //\author: Blaise Gassend
 
-#include <unistd.h>
-#include <math.h>
-#include <linux/joystick.h>
+// #include <diagnostic_updater/diagnostic_updater.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <diagnostic_updater/diagnostic_updater.h>
-#include "ros/ros.h"
-#include <sensor_msgs/Joy.h>
+// #include <diagnostic_updater/diagnostic_updater.h>
+#include <linux/joystick.h>
+#include <math.h>
+#include <unistd.h>
 
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/joy.hpp>
+
+using namespace std::chrono_literals;
+// TODO(mikaelarguedas) remove these macros to use rclcpp logging macro when available
+// add back the pedantic flag at that point because
+// we won't have variadic macros with empty VA_ARGS anymore
+#define ROS_ERROR(str, ...) fprintf(stderr, str "\n", ## __VA_ARGS__)
+#define ROS_WARN(str, ...) fprintf(stderr, str "\n", ## __VA_ARGS__)
+#define ROS_INFO(str, ...) printf(str "\n", ## __VA_ARGS__)
+#define ROS_DEBUG(str, ...) printf(str "\n", ## __VA_ARGS__)
 
 ///\brief Opens, reads from and publishes joystick events
 class Joystick
 {
 private:
-  ros::NodeHandle nh_;
-  bool open_;
-  bool sticky_buttons_;
-  bool default_trig_val_;
+  // bool open_;               
+  // bool sticky_buttons_;
+  // bool default_trig_val_;
   std::string joy_dev_;
   std::string joy_dev_name_;
   double deadzone_;
   double autorepeat_rate_;   // in Hz.  0 for no repeat.
   double coalesce_interval_; // Defaults to 100 Hz rate limit.
-  int event_count_;
-  int pub_count_;
-  ros::Publisher pub_;
-  double lastDiagTime_;
-  
-  diagnostic_updater::Updater diagnostic_;
-  
-  ///\brief Publishes diagnostics and status
-  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat)
-  {
-    double now = ros::Time::now().toSec();
-    double interval = now - lastDiagTime_;
-    if (open_)
-      stat.summary(0, "OK");
-    else
-      stat.summary(2, "Joystick not open.");
-    
-    stat.add("topic", pub_.getTopic());
-    stat.add("device", joy_dev_);
-    stat.add("device name", joy_dev_name_);
-    stat.add("dead zone", deadzone_);
-    stat.add("autorepeat rate (Hz)", autorepeat_rate_);
-    stat.add("coalesce interval (s)", coalesce_interval_);
-    stat.add("recent joystick event rate (Hz)", event_count_ / interval);
-    stat.add("recent publication rate (Hz)", pub_count_ / interval);
-    stat.add("subscribers", pub_.getNumSubscribers());
-    stat.add("default trig val", default_trig_val_);
-    stat.add("sticky buttons", sticky_buttons_);
-    event_count_ = 0;
-    pub_count_ = 0;
-    lastDiagTime_ = now;
-  }
+<<<<<<< HEAD
+  // // TODO(mikaelarguedas) commenting out diagnostic logic for now
+  // int event_count_;
+  // int pub_count_;
+  // double lastDiagTime_;
+  // 
+  // ros::Publisher pub_;
+  // diagnostic_updater::Updater diagnostic_;
+  //
+  // ///\brief Publishes diagnostics and status
+  // void diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat)
+  // {
+  //   double now = ros::Time::now().toSec();
+  //   double interval = now - lastDiagTime_;
+  //   if (open_)
+  //     stat.summary(0, "OK");
+  //   else
+  //     stat.summary(2, "Joystick not open.");
+  //   
+  //   stat.add("topic", pub_.getTopic());
+  //   stat.add("device", joy_dev_);
+  //   stat.add("device name", joy_dev_name_);
+  //   stat.add("dead zone", deadzone_);
+  //   stat.add("autorepeat rate (Hz)", autorepeat_rate_);
+  //   stat.add("coalesce interval (s)", coalesce_interval_);
+  //   stat.add("recent joystick event rate (Hz)", event_count_ / interval);
+  //   stat.add("recent publication rate (Hz)", pub_count_ / interval);
+  //   stat.add("subscribers", pub_.getNumSubscribers());
+  //   stat.add("default trig val", default_trig_val_);
+  //   stat.add("sticky buttons", sticky_buttons_);
+  //   event_count_ = 0;
+  //   pub_count_ = 0;
+  //   lastDiagTime_ = now;
+  // }
 
-  /*! \brief Returns the device path of the first joystick that matches joy_name.
-   *         If no match is found, an empty string is returned.
-   */
-  std::string get_dev_by_joy_name(const std::string& joy_name)
-  {
-    const char path[] = "/dev/input"; // no trailing / here
-    struct dirent *entry;
-    struct stat stat_buf;
+  // /*! \brief Returns the device path of the first joystick that matches joy_name.
+  //  *         If no match is found, an empty string is returned.
+  //  */
+  // std::string get_dev_by_joy_name(const std::string& joy_name)
+  // {
+  //   const char path[] = "/dev/input"; // no trailing / here
+  //   struct dirent *entry;
+  //   struct stat stat_buf;
 
-    DIR *dev_dir = opendir(path);
-    if (dev_dir == NULL)
-    {
-      ROS_ERROR("Couldn't open %s. Error %i: %s.", path, errno, strerror(errno));
-      return "";
-    }
+  //   DIR *dev_dir = opendir(path);
+  //   if (dev_dir == NULL)
+  //   {
+  //     ROS_ERROR("Couldn't open %s. Error %i: %s.", path, errno, strerror(errno));
+  //     return "";
+  //   }
 
-    while ((entry = readdir(dev_dir)) != NULL)
-    {
-      // filter entries
-      if (strncmp(entry->d_name, "js", 2) != 0) // skip device if it's not a joystick
-        continue;
-      std::string current_path = std::string(path) + "/" + entry->d_name;
-      if (stat(current_path.c_str(), &stat_buf) == -1)
-        continue;
-      if (!S_ISCHR(stat_buf.st_mode)) // input devices are character devices, skip other
-        continue;
+  //   while ((entry = readdir(dev_dir)) != NULL)
+  //   {
+  //     // filter entries
+  //     if (strncmp(entry->d_name, "js", 2) != 0) // skip device if it's not a joystick
+  //       continue;
+  //     std::string current_path = std::string(path) + "/" + entry->d_name;
+  //     if (stat(current_path.c_str(), &stat_buf) == -1)
+  //       continue;
+  //     if (!S_ISCHR(stat_buf.st_mode)) // input devices are character devices, skip other
+  //       continue;
 
-      // get joystick name
-      int joy_fd = open(current_path.c_str(), O_RDONLY);
-      if (joy_fd == -1)
-        continue;
+  //     // get joystick name
+  //     int joy_fd = open(current_path.c_str(), O_RDONLY);
+  //     if (joy_fd == -1)
+  //       continue;
 
-      char current_joy_name[128];
-      if (ioctl(joy_fd, JSIOCGNAME(sizeof(current_joy_name)), current_joy_name) < 0)
-        strncpy(current_joy_name, "Unknown", sizeof(current_joy_name));
+  //     char current_joy_name[128];
+  //     if (ioctl(joy_fd, JSIOCGNAME(sizeof(current_joy_name)), current_joy_name) < 0)
+  //       strncpy(current_joy_name, "Unknown", sizeof(current_joy_name));
 
-      close(joy_fd);
+  //     close(joy_fd);
 
-      ROS_INFO("Found joystick: %s (%s).", current_joy_name, current_path.c_str());
+  //     ROS_INFO("Found joystick: %s (%s).", current_joy_name, current_path.c_str());
 
-      if (strcmp(current_joy_name, joy_name.c_str()) == 0)
-      {
-          closedir(dev_dir);
-          return current_path;
-      }
-    }
+  //     if (strcmp(current_joy_name, joy_name.c_str()) == 0)
+  //     {
+  //         closedir(dev_dir);
+  //         return current_path;
+  //     }
+  //   }
 
-    closedir(dev_dir);
-    return "";
-  }
-  
+  //   closedir(dev_dir);
+  //   return "";
+  // }
 public:
-  Joystick() : nh_(), diagnostic_()
+  Joystick()
   {}
   
   ///\brief Opens joystick port, reads from port and publishes while node is active
   int main(int argc, char **argv)
   {
-    diagnostic_.add("Joystick Driver Status", this, &Joystick::diagnostics);
-    diagnostic_.setHardwareID("none");
+    // diagnostic_.add("Joystick Driver Status", this, &Joystick::diagnostics);
+    // diagnostic_.setHardwareID("none");
+    (void)argc;
+    (void)argv;
+
+    auto node = std::make_shared<rclcpp::Node>("joy_node");
+
+    auto pub = node->create_publisher<sensor_msgs::msg::Joy>("joy");
 
     // Parameters
-    ros::NodeHandle nh_param("~");
-    pub_ = nh_.advertise<sensor_msgs::Joy>("joy", 1);
-    nh_param.param<std::string>("dev", joy_dev_, "/dev/input/js0");
-    nh_param.param<std::string>("dev_name", joy_dev_name_, "");
-    nh_param.param<double>("deadzone", deadzone_, 0.05);
-    nh_param.param<double>("autorepeat_rate", autorepeat_rate_, 0);
-    nh_param.param<double>("coalesce_interval", coalesce_interval_, 0.001);
-    nh_param.param<bool>("default_trig_val",default_trig_val_,false);
-    nh_param.param<bool>("sticky_buttons", sticky_buttons_, false);
-
+    node->get_parameter_or("dev", joy_dev_, std::string("/dev/input/js0"));
+    node->get_parameter_or("dev_name", joy_dev_name_, std::string(""));
+    node->get_parameter_or("deadzone", deadzone_, 0.05);
+    node->get_parameter_or("autorepeat_rate", autorepeat_rate_, static_cast<double>(0));
+    node->get_parameter_or("coalesce_interval", coalesce_interval_, 0.001);
+    node->get_parameter_or("default_trig_val", default_trig_val_, false);
+    node->get_parameter_or("sticky_buttons", sticky_buttons, false);
+    
     // Checks on parameters
     if (!joy_dev_name_.empty())
     {
@@ -214,21 +232,21 @@ public:
     struct timeval tv;
     fd_set set;
     int joy_fd;
-    event_count_ = 0;
-    pub_count_ = 0;
-    lastDiagTime_ = ros::Time::now().toSec();
+    // event_count_ = 0;
+    // pub_count_ = 0;
+    // lastDiagTime_ = rclcpp::Time::now().toSec();
     
     // Big while loop opens, publishes
-    while (nh_.ok())
+    while (rclcpp::ok())
     {                                      
-      open_ = false;
-      diagnostic_.force_update();
+      // open_ = false;
+      // diagnostic_.force_update();
       bool first_fault = true;
+      auto timer_callback = []() -> void {};
+      auto timer = node->create_wall_timer(1s, timer_callback);
       while (true)
       {
-        ros::spinOnce();
-        if (!nh_.ok())
-          goto cleanup;
+        rclcpp::spin_some(node);
         joy_fd = open(joy_dev_.c_str(), O_RDONLY);
         if (joy_fd != -1)
         {
@@ -248,25 +266,34 @@ public:
           ROS_ERROR("Couldn't open joystick %s. Will retry every second.", joy_dev_.c_str());
           first_fault = false;
         }
-        sleep(1.0);
-        diagnostic_.update();
+        // diagnostic_.update();
       }
-      
+      timer->cancel();
       ROS_INFO("Opened joystick: %s. deadzone_: %f.", joy_dev_.c_str(), deadzone_);
-      open_ = true;
-      diagnostic_.force_update();
+      // open_ = true;
+      // diagnostic_.force_update();
       
       bool tv_set = false;
       bool publication_pending = false;
       tv.tv_sec = 1;
       tv.tv_usec = 0;
-      sensor_msgs::Joy joy_msg; // Here because we want to reset it on device close.
+
+      // Here because we want to reset it on device close.
+      auto joy_msg = std::make_shared<sensor_msgs::msg::Joy>();
       double val; //Temporary variable to hold event values
-      sensor_msgs::Joy last_published_joy_msg; // used for sticky buttons option
-      sensor_msgs::Joy sticky_buttons_joy_msg; // used for sticky buttons option
-      while (nh_.ok()) 
+      auto last_published_joy_msg = std::make_shared<sensor_msgs::msg::Joy>();
+      auto sticky_buttons_joy_msg = std::make_shared<sensor_msgs::msg::Joy>();
+      joy_msg->header.stamp.sec = 0;
+      joy_msg->header.stamp.nanosec = 0;
+      joy_msg->header.frame_id = "joy";
+      joy_msg->axes.resize(2);
+      joy_msg->axes[0] = joy_msg->axes[1] = 0;
+      joy_msg->buttons.resize(1);
+      joy_msg->buttons[0] = 0;
+
+      while (rclcpp::ok()) 
       {
-        ros::spinOnce();
+        rclcpp::spin_some(node);
         
         bool publish_now = false;
         bool publish_soon = false;
@@ -280,7 +307,6 @@ public:
         {
           tv.tv_sec = 0;
           tv.tv_usec = 0;
-          //ROS_INFO("Select returned negative. %i", ros::isShuttingDown());
           continue;
           //break; // Joystick is probably closed. Not sure if this case is useful.
         }
@@ -291,25 +317,25 @@ public:
             break; // Joystick is probably closed. Definitely occurs.
           
           //ROS_INFO("Read data...");
-          joy_msg.header.stamp = ros::Time().now();
-          event_count_++;
+          joy_msg->header.stamp = rclcpp::Time::now();
+          // event_count_++;
           switch(event.type)
           {
           case JS_EVENT_BUTTON:
           case JS_EVENT_BUTTON | JS_EVENT_INIT:
-            if(event.number >= joy_msg.buttons.size())
+            if(event.number >= joy_msg->buttons.size())
             {
-              int old_size = joy_msg.buttons.size();
+              int old_size = joy_msg->buttons.size();
               joy_msg.buttons.resize(event.number+1);
-              last_published_joy_msg.buttons.resize(event.number+1);
-              sticky_buttons_joy_msg.buttons.resize(event.number+1);
-              for(unsigned int i=old_size;i<joy_msg.buttons.size();i++){
+              last_published_joy_msg->buttons.resize(event.number+1);
+              sticky_buttons_joy_msg->buttons.resize(event.number+1);
+              for(unsigned int i=old_size;i<joy_msg->buttons.size();i++){
                 joy_msg.buttons[i] = 0.0;
                 last_published_joy_msg.buttons[i] = 0.0;
                 sticky_buttons_joy_msg.buttons[i] = 0.0;
               }
             }
-            joy_msg.buttons[event.number] = (event.value ? 1 : 0);
+            joy_msg->buttons[event.number] = (event.value ? 1 : 0);
             // For initial events, wait a bit before sending to try to catch
             // all the initial events.
             if (!(event.type & JS_EVENT_INIT))
@@ -320,16 +346,16 @@ public:
           case JS_EVENT_AXIS:
           case JS_EVENT_AXIS | JS_EVENT_INIT:
             val = event.value;
-            if(event.number >= joy_msg.axes.size())
+            if(event.number >= joy_msg->axes.size())
             {
-              int old_size = joy_msg.axes.size();
+              int old_size = joy_msg->axes.size();
               joy_msg.axes.resize(event.number+1);
-              last_published_joy_msg.axes.resize(event.number+1);
-              sticky_buttons_joy_msg.axes.resize(event.number+1);
-              for(unsigned int i=old_size;i<joy_msg.axes.size();i++){
-                joy_msg.axes[i] = 0.0;
-                last_published_joy_msg.axes[i] = 0.0;
-                sticky_buttons_joy_msg.axes[i] = 0.0;
+              last_published_joy_msg->axes.resize(event.number+1);
+              sticky_buttons_joy_msg->axes.resize(event.number+1);
+              for(unsigned int i=old_size;i<joy_msg->axes.size();i++){
+                joy_msg->axes[i] = 0.0;
+                last_published_joy_msg->axes[i] = 0.0;
+                sticky_buttons_joy_msg->axes[i] = 0.0;
               }
             }
 	    if(default_trig_val_){ 
@@ -340,7 +366,7 @@ public:
 		val += unscaled_deadzone;
 	      else
 		val = 0;
-	      joy_msg.axes[event.number] = val * scale;
+	      joy_msg->axes[event.number] = val * scale;
 	      // Will wait a bit before sending to try to combine events. 				
 	      publish_soon = true;
 	      break;
@@ -356,7 +382,7 @@ public:
 		  val += unscaled_deadzone;
 		else
 		  val=0;
-		joy_msg.axes[event.number]= val * scale;
+		joy_msg->axes[event.number]= val * scale;
 	      }
 
 	      publish_soon = true;
@@ -377,10 +403,10 @@ public:
 	  //ROS_INFO("Publish...");
 	  if (sticky_buttons_ == true) {
 	    // cycle through buttons
-            for (size_t i = 0; i < joy_msg.buttons.size(); i++) {
+            for (size_t i = 0; i < joy_msg->buttons.size(); i++) {
 	      // change button state only on transition from 0 to 1
-	      if (joy_msg.buttons[i] == 1 && last_published_joy_msg.buttons[i] == 0) {
-		sticky_buttons_joy_msg.buttons[i] = sticky_buttons_joy_msg.buttons[i] ? 0 : 1;
+	      if (joy_msg->buttons[i] == 1 && last_published_joy_msg->buttons[i] == 0) {
+		sticky_buttons_joy_msg->buttons[i] = sticky_buttons_joy_msg->buttons[i] ? 0 : 1;
 	      } else {
 		// do not change the message sate
 		//sticky_buttons_joy_msg.buttons[i] = sticky_buttons_joy_msg.buttons[i] ? 0 : 1;
@@ -389,15 +415,15 @@ public:
 	    // update last published message
 	    last_published_joy_msg = joy_msg;
 	    // fill rest of sticky_buttons_joy_msg (time stamps, axes, etc)
-	    sticky_buttons_joy_msg.header.stamp.nsec = joy_msg.header.stamp.nsec;
-	    sticky_buttons_joy_msg.header.stamp.sec  = joy_msg.header.stamp.sec;
-	    sticky_buttons_joy_msg.header.frame_id   = joy_msg.header.frame_id;
-            for(size_t i=0; i < joy_msg.axes.size(); i++){
-	      sticky_buttons_joy_msg.axes[i] = joy_msg.axes[i];
+	    sticky_buttons_joy_msg->header.stamp.nsec = joy_msg->header.stamp.nsec;
+	    sticky_buttons_joy_msg->header.stamp.sec  = joy_msg->header.stamp.sec;
+	    sticky_buttons_joy_msg->header.frame_id   = joy_msg->header.frame_id;
+            for(size_t i=0; i < joy_msg->axes.size(); i++){
+	      sticky_buttons_joy_msg->axes[i] = joy_msg->axes[i];
 	    }
-	    pub_.publish(sticky_buttons_joy_msg);
+	    pub_->publish(sticky_buttons_joy_msg);
 	  } else {
-	    pub_.publish(joy_msg);
+	    pub_->publish(joy_msg);
 	  }
 
 	  publish_now = false;
@@ -433,17 +459,14 @@ public:
           tv.tv_usec = 0;
         }
 	
-        diagnostic_.update();
+        // diagnostic_.update();
       } // End of joystick open loop.
       
       close(joy_fd);
-      ros::spinOnce();
-      if (nh_.ok())
+      rclcpp::spin_some(node);
+      if (rclcpp::ok())
         ROS_ERROR("Connection to joystick device lost unexpectedly. Will reopen.");
     }
-    
-  cleanup:
-    ROS_INFO("joy_node shut down.");
     
     return 0;
   }
@@ -451,7 +474,7 @@ public:
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "joy_node");
+  rclcpp::init(argc, argv);
   Joystick j;
   return j.main(argc, argv);
 }
