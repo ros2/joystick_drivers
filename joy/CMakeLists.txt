@@ -1,34 +1,37 @@
-# http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
+
 project(joy)
 
-# Load catkin and all dependencies required for this package
-set(CATKIN_DEPS roscpp diagnostic_updater sensor_msgs)
-find_package(catkin REQUIRED ${CATKIN_DEPS})
-catkin_package(DEPENDS ${CATKIN_DEPS})
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-# Look for <linux/joystick.h>
-include(CheckIncludeFiles)
-check_include_files(linux/joystick.h HAVE_LINUX_JOYSTICK_H)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
-if(HAVE_LINUX_JOYSTICK_H)
-  include_directories(msg/cpp ${catkin_INCLUDE_DIRS})
-  add_executable(joy_node src/joy_node.cpp)
-  target_link_libraries(joy_node ${catkin_LIBRARIES})
-else(HAVE_LINUX_JOYSTICK_H)
-  message("Warning: no <linux/joystick.h>; won't build joy node")
-endif(HAVE_LINUX_JOYSTICK_H)
+# for now, this program only exists for Linux hosts, since it calls into
+# the underlying joystick driver provided by the Linux kernel.
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  # Look for <linux/joystick.h>
+  include(CheckIncludeFiles)
+  check_include_files(linux/joystick.h HAVE_LINUX_JOYSTICK_H)
 
-#catkin_add_nosetests(test/test_joy_msg_migration.py)
+  if(HAVE_LINUX_JOYSTICK_H)
+    include_directories(msg/cpp ${catkin_INCLUDE_DIRS})
+    add_executable(joy_node src/joy_node_linux.cpp)
+    ament_target_dependencies(joy_node
+      "rclcpp"
+      "sensor_msgs")
+    install(TARGETS joy_node DESTINATION lib/${PROJECT_NAME})
+  else()
+    message(FATAL_ERROR "no <linux/joystick.h>; can't build joy node")
+  endif()
 
-# Install targets
-if(HAVE_LINUX_JOYSTICK_H)
-install(TARGETS joy_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-endif(HAVE_LINUX_JOYSTICK_H)
+endif()
 
-install(DIRECTORY migration_rules
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  )
+ament_package()
