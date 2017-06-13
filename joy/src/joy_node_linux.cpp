@@ -172,7 +172,7 @@ public:
     node->get_parameter_or("dev", joy_dev_, std::string("/dev/input/js0"));
     node->get_parameter_or("dev_name", joy_dev_name_, std::string(""));
     node->get_parameter_or("deadzone", deadzone_, 0.05);
-    node->get_parameter_or("autorepeat_rate", autorepeat_rate_, static_cast<double>(0));
+    node->get_parameter_or("autorepeat_rate", autorepeat_rate_, static_cast<double>(20));
     node->get_parameter_or("coalesce_interval", coalesce_interval_, 0.001);
     node->get_parameter_or("default_trig_val", default_trig_val_, false);
     node->get_parameter_or("sticky_buttons", sticky_buttons, false);
