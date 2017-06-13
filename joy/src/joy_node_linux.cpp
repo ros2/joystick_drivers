@@ -112,7 +112,7 @@ public:
     // Parameters
     node->get_parameter_or("dev", joy_dev_, std::string("/dev/input/js0"));
     node->get_parameter_or("deadzone", deadzone_, 0.05);
-    node->get_parameter_or("autorepeat_rate", autorepeat_rate_, static_cast<double>(0));
+    node->get_parameter_or("autorepeat_rate", autorepeat_rate_, static_cast<double>(20));
     node->get_parameter_or("coalesce_interval", coalesce_interval_, 0.001);
     
 
