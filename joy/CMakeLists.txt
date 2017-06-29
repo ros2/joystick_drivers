@@ -27,7 +27,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     ament_target_dependencies(joy_node
       "rclcpp"
       "sensor_msgs")
-    install(TARGETS joy_node DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+    install(TARGETS joy_node DESTINATION lib/${PROJECT_NAME})
   else()
     message(FATAL_ERROR "no <linux/joystick.h>; can't build joy node")
   endif()
