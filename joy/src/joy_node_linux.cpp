@@ -41,16 +41,15 @@
 #include <unistd.h>
 
 #include <rclcpp/rclcpp.hpp>
+#include <rcutils/logging_macros.h>
 #include <sensor_msgs/msg/joy.hpp>
 
 using namespace std::chrono_literals;
-// TODO(mikaelarguedas) remove these macros to use rclcpp logging macro when available
-// add back the pedantic flag at that point because
-// we won't have variadic macros with empty VA_ARGS anymore
-#define ROS_ERROR(str, ...) fprintf(stderr, str "\n", ## __VA_ARGS__)
-#define ROS_WARN(str, ...) fprintf(stderr, str "\n", ## __VA_ARGS__)
-#define ROS_INFO(str, ...) printf(str "\n", ## __VA_ARGS__)
-#define ROS_DEBUG(str, ...) printf(str "\n", ## __VA_ARGS__)
+
+#define ROS_ERROR RCUTILS_LOG_ERROR
+#define ROS_WARN RCUTILS_LOG_WARN
+#define ROS_INFO RCUTILS_LOG_INFO
+#define ROS_DEBUG RCUTILS_LOG_DEBUG
 
 ///\brief Opens, reads from and publishes joystick events
 class Joystick
