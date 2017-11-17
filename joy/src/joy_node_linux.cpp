@@ -165,6 +165,10 @@ public:
     // pub_count_ = 0;
     // lastDiagTime_ = rclcpp::Time::now().toSec();
     
+    rclcpp::TimeSource ts(node);
+    rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+    ts.attachClock(clock);
+
     // Big while loop opens, publishes
     while (rclcpp::ok())
     {                                      
@@ -243,9 +247,6 @@ public:
             break; // Joystick is probably closed. Definitely occurs.
           
           //ROS_INFO("Read data...");
-          rclcpp::TimeSource ts(node);
-          rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
-          ts.attachClock(clock);
           joy_msg->header.stamp = clock->now();
           // event_count_++;
           switch(event.type)
