@@ -40,7 +40,10 @@
 #include <math.h>
 #include <unistd.h>
 
+#include <rclcpp/clock.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/time.hpp>
+#include <rclcpp/time_source.hpp>
 #include <rcutils/logging_macros.h>
 #include <sensor_msgs/msg/joy.hpp>
 
@@ -240,7 +243,10 @@ public:
             break; // Joystick is probably closed. Definitely occurs.
           
           //ROS_INFO("Read data...");
-          joy_msg->header.stamp = rclcpp::Time::now();
+          rclcpp::TimeSource ts(node);
+          rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+          ts.attachClock(clock);
+          joy_msg->header.stamp = clock->now();
           // event_count_++;
           switch(event.type)
           {
