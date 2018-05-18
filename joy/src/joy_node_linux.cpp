@@ -38,7 +38,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <dirent.h>
-// #include <diagnostic_updater/diagnostic_updater.h>
 #include <linux/joystick.h>
 #include <math.h>
 #include <unistd.h>
@@ -62,26 +61,26 @@ class Joystick
 {
 private:
   // bool open_;               
-  // bool sticky_buttons_;
-  // bool default_trig_val_;
+  bool sticky_buttons_;
+  bool default_trig_val_;
   std::string joy_dev_;
   std::string joy_dev_name_;
   double deadzone_;
   double autorepeat_rate_;   // in Hz.  0 for no repeat.
   double coalesce_interval_; // Defaults to 100 Hz rate limit.
-<<<<<<< HEAD
+
   // // TODO(mikaelarguedas) commenting out diagnostic logic for now
   // int event_count_;
-  // int pub_count_;
+  int pub_count_;
   // double lastDiagTime_;
   // 
-  // ros::Publisher pub_;
+  rclcpp::Publisher<sensor_msgs::msg::Joy>::SharedPtr pub_;
   // diagnostic_updater::Updater diagnostic_;
   //
   // ///\brief Publishes diagnostics and status
   // void diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat)
   // {
-  //   double now = ros::Time::now().toSec();
+  //   double now = rclcpp::Time::now().toSec();
   //   double interval = now - lastDiagTime_;
   //   if (open_)
   //     stat.summary(0, "OK");
@@ -104,56 +103,56 @@ private:
   //   lastDiagTime_ = now;
   // }
 
-  // /*! \brief Returns the device path of the first joystick that matches joy_name.
-  //  *         If no match is found, an empty string is returned.
-  //  */
-  // std::string get_dev_by_joy_name(const std::string& joy_name)
-  // {
-  //   const char path[] = "/dev/input"; // no trailing / here
-  //   struct dirent *entry;
-  //   struct stat stat_buf;
+  /*! \brief Returns the device path of the first joystick that matches joy_name.
+   *         If no match is found, an empty string is returned.
+   */
+  std::string get_dev_by_joy_name(const std::string& joy_name)
+  {
+    const char path[] = "/dev/input"; // no trailing / here
+    struct dirent *entry;
+    struct stat stat_buf;
 
-  //   DIR *dev_dir = opendir(path);
-  //   if (dev_dir == NULL)
-  //   {
-  //     ROS_ERROR("Couldn't open %s. Error %i: %s.", path, errno, strerror(errno));
-  //     return "";
-  //   }
+    DIR *dev_dir = opendir(path);
+    if (dev_dir == NULL)
+    {
+      ROS_ERROR("Couldn't open %s. Error %i: %s.", path, errno, strerror(errno));
+      return "";
+    }
 
-  //   while ((entry = readdir(dev_dir)) != NULL)
-  //   {
-  //     // filter entries
-  //     if (strncmp(entry->d_name, "js", 2) != 0) // skip device if it's not a joystick
-  //       continue;
-  //     std::string current_path = std::string(path) + "/" + entry->d_name;
-  //     if (stat(current_path.c_str(), &stat_buf) == -1)
-  //       continue;
-  //     if (!S_ISCHR(stat_buf.st_mode)) // input devices are character devices, skip other
-  //       continue;
+    while ((entry = readdir(dev_dir)) != NULL)
+    {
+      // filter entries
+      if (strncmp(entry->d_name, "js", 2) != 0) // skip device if it's not a joystick
+        continue;
+      std::string current_path = std::string(path) + "/" + entry->d_name;
+      if (stat(current_path.c_str(), &stat_buf) == -1)
+        continue;
+      if (!S_ISCHR(stat_buf.st_mode)) // input devices are character devices, skip other
+        continue;
 
-  //     // get joystick name
-  //     int joy_fd = open(current_path.c_str(), O_RDONLY);
-  //     if (joy_fd == -1)
-  //       continue;
+      // get joystick name
+      int joy_fd = open(current_path.c_str(), O_RDONLY);
+      if (joy_fd == -1)
+        continue;
 
-  //     char current_joy_name[128];
-  //     if (ioctl(joy_fd, JSIOCGNAME(sizeof(current_joy_name)), current_joy_name) < 0)
-  //       strncpy(current_joy_name, "Unknown", sizeof(current_joy_name));
+      char current_joy_name[128];
+      if (ioctl(joy_fd, JSIOCGNAME(sizeof(current_joy_name)), current_joy_name) < 0)
+        strncpy(current_joy_name, "Unknown", sizeof(current_joy_name));
 
-  //     close(joy_fd);
+      close(joy_fd);
 
-  //     ROS_INFO("Found joystick: %s (%s).", current_joy_name, current_path.c_str());
+      ROS_INFO("Found joystick: %s (%s).", current_joy_name, current_path.c_str());
 
-  //     if (strcmp(current_joy_name, joy_name.c_str()) == 0)
-  //     {
-  //         closedir(dev_dir);
-  //         return current_path;
-  //     }
-  //   }
+      if (strcmp(current_joy_name, joy_name.c_str()) == 0)
+      {
+          closedir(dev_dir);
+          return current_path;
+      }
+    }
 
-  //   closedir(dev_dir);
-  //   return "";
-  // }
+    closedir(dev_dir);
+    return "";
+  }
 public:
   Joystick()
   {}
@@ -168,7 +167,7 @@ public:
 
     auto node = std::make_shared<rclcpp::Node>("joy_node");
 
-    auto pub = node->create_publisher<sensor_msgs::msg::Joy>("joy");
+    pub_ = node->create_publisher<sensor_msgs::msg::Joy>("joy");
 
     // Parameters
     node->get_parameter_or("dev", joy_dev_, std::string("/dev/input/js0"));
@@ -177,14 +176,16 @@ public:
     node->get_parameter_or("autorepeat_rate", autorepeat_rate_, static_cast<double>(20));
     node->get_parameter_or("coalesce_interval", coalesce_interval_, 0.001);
     node->get_parameter_or("default_trig_val", default_trig_val_, false);
-    node->get_parameter_or("sticky_buttons", sticky_buttons, false);
+    node->get_parameter_or("sticky_buttons", sticky_buttons_, false);
     
     // Checks on parameters
     if (!joy_dev_name_.empty())
     {
         std::string joy_dev_path = get_dev_by_joy_name(joy_dev_name_);
         if (joy_dev_path.empty())
+	{
             ROS_ERROR("Couldn't find a joystick with name %s. Falling back to default device.", joy_dev_name_.c_str());
+	}
         else
         {
             ROS_INFO("Using %s as joystick device.", joy_dev_path.c_str());
@@ -332,13 +333,13 @@ public:
             if(event.number >= joy_msg->buttons.size())
             {
               int old_size = joy_msg->buttons.size();
-              joy_msg.buttons.resize(event.number+1);
+              joy_msg->buttons.resize(event.number+1);
               last_published_joy_msg->buttons.resize(event.number+1);
               sticky_buttons_joy_msg->buttons.resize(event.number+1);
               for(unsigned int i=old_size;i<joy_msg->buttons.size();i++){
-                joy_msg.buttons[i] = 0.0;
-                last_published_joy_msg.buttons[i] = 0.0;
-                sticky_buttons_joy_msg.buttons[i] = 0.0;
+                joy_msg->buttons[i] = 0.0;
+                last_published_joy_msg->buttons[i] = 0.0;
+                sticky_buttons_joy_msg->buttons[i] = 0.0;
               }
             }
             joy_msg->buttons[event.number] = (event.value ? 1 : 0);
@@ -355,7 +356,7 @@ public:
             if(event.number >= joy_msg->axes.size())
             {
               int old_size = joy_msg->axes.size();
-              joy_msg.axes.resize(event.number+1);
+              joy_msg->axes.resize(event.number+1);
               last_published_joy_msg->axes.resize(event.number+1);
               sticky_buttons_joy_msg->axes.resize(event.number+1);
               for(unsigned int i=old_size;i<joy_msg->axes.size();i++){
@@ -415,13 +416,13 @@ public:
 		sticky_buttons_joy_msg->buttons[i] = sticky_buttons_joy_msg->buttons[i] ? 0 : 1;
 	      } else {
 		// do not change the message sate
-		//sticky_buttons_joy_msg.buttons[i] = sticky_buttons_joy_msg.buttons[i] ? 0 : 1;
+		//sticky_buttons_joy_msg->buttons[i] = sticky_buttons_joy_msg->buttons[i] ? 0 : 1;
 	      }
 	    }
 	    // update last published message
 	    last_published_joy_msg = joy_msg;
 	    // fill rest of sticky_buttons_joy_msg (time stamps, axes, etc)
-	    sticky_buttons_joy_msg->header.stamp.nsec = joy_msg->header.stamp.nsec;
+	    sticky_buttons_joy_msg->header.stamp.nanosec = joy_msg->header.stamp.nanosec;
 	    sticky_buttons_joy_msg->header.stamp.sec  = joy_msg->header.stamp.sec;
 	    sticky_buttons_joy_msg->header.frame_id   = joy_msg->header.frame_id;
             for(size_t i=0; i < joy_msg->axes.size(); i++){
