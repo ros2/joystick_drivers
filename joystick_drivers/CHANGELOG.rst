@@ -2,6 +2,16 @@
 Changelog for package joystick_drivers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* 2.0.0
+* change package to format2
+  drop ament_ignores in all packages but joy
+* Merge pull request `#107 <https://github.com/ros2/joystick_drivers/issues/107>`_ from honeybee-robotics-forks/indigo-devel
+  Numerous outstanding PRs.
+* Changed package xml to format 2
+* Contributors: Jonathan Bohren, Mikael Arguedas, jprod123
+
 1.11.0 (2017-02-10)
 -------------------
 
