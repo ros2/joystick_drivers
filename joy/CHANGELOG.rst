@@ -2,8 +2,8 @@
 Changelog for package joy
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2018-06-26)
+------------------
 * fixups after rebase
 * 2.0.0
 * Fix joystick driver to work with recent changes to rclcpp::Time. (`#4 <https://github.com/ros2/joystick_drivers/issues/4>`_)

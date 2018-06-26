@@ -2,8 +2,8 @@
 Changelog for package ps3joy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2018-06-26)
+------------------
 * 2.0.0
 * change package to format2
   drop ament_ignores in all packages but joy
