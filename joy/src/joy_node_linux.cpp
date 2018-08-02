@@ -246,6 +246,8 @@ public:
       open_ = false;
       // diagnostic_.force_update();
       bool first_fault = true;
+      auto timer_callback = []() -> void {};
+      auto timer = node->create_wall_timer(1s, timer_callback);
       while (true)
       {
         rclcpp::spin_some(node);
@@ -272,6 +274,7 @@ public:
         }
         // diagnostic_.update();
       }
+      timer->cancel();
       ROS_INFO("Opened joystick: %s. deadzone_: %f.", joy_dev_.c_str(), deadzone_);
       open_ = true;
       // diagnostic_.force_update();
