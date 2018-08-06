@@ -246,11 +246,23 @@ public:
       open_ = false;
       // diagnostic_.force_update();
       bool first_fault = true;
-      auto timer_callback = []() -> void {};
-      auto timer = node->create_wall_timer(1s, timer_callback);
       while (true)
       {
-        rclcpp::spin_some(node);
+        // In the first iteration of this loop, first_fault is true so we just
+        // want to check for rclcpp work and not block.  If it turns out that
+        // we cannot open the joystick device immediately, then in subsequent
+        // iterations we block for up to a second in rclcpp before attempting
+        // to open the joystick device again.  The dummy promise and future
+        // are used to accomplish this 1 second wait.
+        std::promise<void> dummy_promise;
+        std::shared_future<void> dummy_future(dummy_promise.get_future());
+        std::chrono::duration<int64_t, std::milli> timeout;
+        if (first_fault) {
+          timeout = std::chrono::milliseconds(0);
+        } else {
+          timeout = std::chrono::milliseconds(1000);
+        }
+        rclcpp::spin_until_future_complete(node, dummy_future, timeout);
         if (!rclcpp::ok())
           goto cleanup;
         joy_fd = open(joy_dev_.c_str(), O_RDONLY);
@@ -274,7 +286,6 @@ public:
         }
         // diagnostic_.update();
       }
-      timer->cancel();
       ROS_INFO("Opened joystick: %s. deadzone_: %f.", joy_dev_.c_str(), deadzone_);
       open_ = true;
       // diagnostic_.force_update();
