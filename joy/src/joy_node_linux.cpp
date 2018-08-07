@@ -185,7 +185,9 @@ public:
     }
 
     if (autorepeat_rate_ > 1 / coalesce_interval_)
+    {
       RCLCPP_WARN(node->get_logger(), "joy_node: autorepeat_rate (%f Hz) > 1/coalesce_interval (%f Hz) does not make sense. Timing behavior is not well defined.", autorepeat_rate_, 1/coalesce_interval_);
+    }
 
     if (deadzone_ >= 1)
     {
@@ -475,7 +477,9 @@ public:
       close(joy_fd);
       rclcpp::spin_some(node);
       if (rclcpp::ok())
+      {
         RCLCPP_ERROR(node->get_logger(), "Connection to joystick device lost unexpectedly. Will reopen.");
+      }
     }
 
   cleanup:
