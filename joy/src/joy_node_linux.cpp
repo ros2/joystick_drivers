@@ -60,14 +60,14 @@ private:
   double autorepeat_rate_;   // in Hz.  0 for no repeat.
   double coalesce_interval_; // Defaults to 100 Hz rate limit.
 
-  // TODO(mikaelarguedas) commenting out diagnostic logic for now
   int event_count_;
   int pub_count_;
   rclcpp::Publisher<sensor_msgs::msg::Joy>::SharedPtr pub_;
   double lastDiagTime_;
-  //
+  // TODO(mikaelarguedas) commenting out diagnostic logic for now
+
   // diagnostic_updater::Updater diagnostic_;
-  //
+
   // ///\brief Publishes diagnostics and status
   // void diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat)
   // {
@@ -77,7 +77,7 @@ private:
   //     stat.summary(0, "OK");
   //   else
   //     stat.summary(2, "Joystick not open.");
-  //
+
   //   stat.add("topic", pub_.getTopic());
   //   stat.add("device", joy_dev_);
   //   stat.add("device name", joy_dev_name_);
@@ -233,7 +233,7 @@ public:
 
     event_count_ = 0;
     pub_count_ = 0;
-    // lastDiagTime_ = ros::Time::now().toSec();
+    lastDiagTime_ = node->now().nanoseconds() / 1e9;
 
     // Big while loop opens, publishes
     while (rclcpp::ok())
@@ -252,11 +252,10 @@ public:
         std::promise<void> dummy_promise;
         std::shared_future<void> dummy_future(dummy_promise.get_future());
         std::chrono::duration<int64_t, std::milli> timeout;
-        if (first_fault) {
+        if (first_fault)
           timeout = std::chrono::milliseconds(0);
-        } else {
+        else
           timeout = std::chrono::milliseconds(1000);
-        }
         rclcpp::spin_until_future_complete(node, dummy_future, timeout);
         if (!rclcpp::ok())
           goto cleanup;
@@ -295,13 +294,7 @@ public:
       double val; //Temporary variable to hold event values
       auto last_published_joy_msg = std::make_shared<sensor_msgs::msg::Joy>();
       auto sticky_buttons_joy_msg = std::make_shared<sensor_msgs::msg::Joy>();
-      joy_msg->header.stamp.sec = 0;
-      joy_msg->header.stamp.nanosec = 0;
       joy_msg->header.frame_id = "joy";
-      joy_msg->axes.resize(2);
-      joy_msg->axes[0] = joy_msg->axes[1] = 0;
-      joy_msg->buttons.resize(1);
-      joy_msg->buttons[0] = 0;
 
       while (rclcpp::ok())
       {
