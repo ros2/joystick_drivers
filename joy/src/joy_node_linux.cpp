@@ -47,11 +47,6 @@
 
 using namespace std::chrono_literals;
 
-#define ROS_ERROR RCUTILS_LOG_ERROR
-#define ROS_WARN RCUTILS_LOG_WARN
-#define ROS_INFO RCUTILS_LOG_INFO
-#define ROS_DEBUG RCUTILS_LOG_DEBUG
-
 ///\brief Opens, reads from and publishes joystick events
 class Joystick
 {
@@ -111,7 +106,7 @@ private:
     DIR *dev_dir = opendir(path);
     if (dev_dir == NULL)
     {
-      ROS_ERROR("Couldn't open %s. Error %i: %s.", path, errno, strerror(errno));
+      RCUTILS_LOG_ERROR("Couldn't open %s. Error %i: %s.", path, errno, strerror(errno));
       return "";
     }
 
@@ -137,7 +132,7 @@ private:
 
       close(joy_fd);
 
-      ROS_INFO("Found joystick: %s (%s).", current_joy_name, current_path.c_str());
+      RCUTILS_LOG_INFO("Found joystick: %s (%s).", current_joy_name, current_path.c_str());
 
       if (strcmp(current_joy_name, joy_name.c_str()) == 0)
       {
@@ -180,45 +175,45 @@ public:
         std::string joy_dev_path = get_dev_by_joy_name(joy_dev_name_);
         if (joy_dev_path.empty())
         {
-            ROS_ERROR("Couldn't find a joystick with name %s. Falling back to default device.", joy_dev_name_.c_str());
+            RCLCPP_ERROR(node->get_logger(), "Couldn't find a joystick with name %s. Falling back to default device.", joy_dev_name_.c_str());
         }
         else
         {
-            ROS_INFO("Using %s as joystick device.", joy_dev_path.c_str());
+            RCLCPP_INFO(node->get_logger(), "Using %s as joystick device.", joy_dev_path.c_str());
             joy_dev_ = joy_dev_path;
         }
     }
 
     if (autorepeat_rate_ > 1 / coalesce_interval_)
-      ROS_WARN("joy_node: autorepeat_rate (%f Hz) > 1/coalesce_interval (%f Hz) does not make sense. Timing behavior is not well defined.", autorepeat_rate_, 1/coalesce_interval_);
+      RCLCPP_WARN(node->get_logger(), "joy_node: autorepeat_rate (%f Hz) > 1/coalesce_interval (%f Hz) does not make sense. Timing behavior is not well defined.", autorepeat_rate_, 1/coalesce_interval_);
 
     if (deadzone_ >= 1)
     {
-      ROS_WARN("joy_node: deadzone greater than 1 was requested. The semantics of deadzone have changed. It is now related to the range [-1:1] instead of [-32767:32767]. For now I am dividing your deadzone by 32767, but this behavior is deprecated so you need to update your launch file.");
+      RCLCPP_WARN(node->get_logger(), "joy_node: deadzone greater than 1 was requested. The semantics of deadzone have changed. It is now related to the range [-1:1] instead of [-32767:32767]. For now I am dividing your deadzone by 32767, but this behavior is deprecated so you need to update your launch file.");
       deadzone_ /= 32767;
     }
 
     if (deadzone_ > 0.9)
     {
-      ROS_WARN("joy_node: deadzone (%f) greater than 0.9, setting it to 0.9", deadzone_);
+      RCLCPP_WARN(node->get_logger(), "joy_node: deadzone (%f) greater than 0.9, setting it to 0.9", deadzone_);
       deadzone_ = 0.9;
     }
 
     if (deadzone_ < 0)
     {
-      ROS_WARN("joy_node: deadzone_ (%f) less than 0, setting to 0.", deadzone_);
+      RCLCPP_WARN(node->get_logger(), "joy_node: deadzone_ (%f) less than 0, setting to 0.", deadzone_);
       deadzone_ = 0;
     }
 
     if (autorepeat_rate_ < 0)
     {
-      ROS_WARN("joy_node: autorepeat_rate (%f) less than 0, setting to 0.", autorepeat_rate_);
+      RCLCPP_WARN(node->get_logger(), "joy_node: autorepeat_rate (%f) less than 0, setting to 0.", autorepeat_rate_);
       autorepeat_rate_ = 0;
     }
 
     if (coalesce_interval_ < 0)
     {
-      ROS_WARN("joy_node: coalesce_interval (%f) less than 0, setting to 0.", coalesce_interval_);
+      RCLCPP_WARN(node->get_logger(), "joy_node: coalesce_interval (%f) less than 0, setting to 0.", coalesce_interval_);
       coalesce_interval_ = 0;
     }
 
@@ -281,12 +276,12 @@ public:
           break;
         if (first_fault)
         {
-          ROS_ERROR("Couldn't open joystick %s. Will retry every second.", joy_dev_.c_str());
+          RCLCPP_ERROR(node->get_logger(), "Couldn't open joystick %s. Will retry every second.", joy_dev_.c_str());
           first_fault = false;
         }
         // diagnostic_.update();
       }
-      ROS_INFO("Opened joystick: %s. deadzone_: %f.", joy_dev_.c_str(), deadzone_);
+      RCLCPP_INFO(node->get_logger(), "Opened joystick: %s. deadzone_: %f.", joy_dev_.c_str(), deadzone_);
       open_ = true;
       // diagnostic_.force_update();
 
@@ -317,14 +312,14 @@ public:
         FD_ZERO(&set);
         FD_SET(joy_fd, &set);
 
-        //ROS_INFO("Select...");
+        //RCLCPP_INFO(node->get_logger(), "Select...");
         int select_out = select(joy_fd+1, &set, NULL, NULL, &tv);
-        //ROS_INFO("Tick...");
+        //RCLCPP_INFO(node->get_logger(), "Tick...");
         if (select_out == -1)
         {
           tv.tv_sec = 0;
           tv.tv_usec = 0;
-          //ROS_INFO("Select returned negative. %i", ros::isShuttingDown());
+          //RCLCPP_INFO(node->get_logger(), "Select returned negative. %i", ros::isShuttingDown());
           continue;
           //break; // Joystick is probably closed. Not sure if this case is useful.
         }
@@ -334,7 +329,7 @@ public:
           if (read(joy_fd, &event, sizeof(js_event)) == -1 && errno != EAGAIN)
             break; // Joystick is probably closed. Definitely occurs.
 
-          //ROS_INFO("Read data...");
+          //RCLCPP_INFO(node->get_logger(), "Read data...");
           joy_msg->header.stamp = clock->now();
           event_count_++;
           switch(event.type)
@@ -406,7 +401,7 @@ public:
               publish_soon = true;
               break;
               default:
-              ROS_WARN("joy_node: Unknown event type. Please file a ticket. time=%u, value=%d, type=%Xh, number=%d", event.time, event.value, event.type, event.number);
+              RCLCPP_WARN(node->get_logger(), "joy_node: Unknown event type. Please file a ticket. time=%u, value=%d, type=%Xh, number=%d", event.time, event.value, event.type, event.number);
               break;
             }
           }
@@ -421,7 +416,7 @@ public:
           // Assume that all the JS_EVENT_INIT messages have arrived already.
           // This should be the case as the kernel sends them along as soon as
           // the device opens.
-          //ROS_INFO("Publish...");
+          //RCLCPP_INFO(node->get_logger(), "Publish...");
           if (sticky_buttons_ == true) {
             // cycle through buttons
             for (size_t i = 0; i < joy_msg->buttons.size(); i++) {
@@ -463,7 +458,7 @@ public:
           tv.tv_usec = (coalesce_interval_ - tv.tv_sec) * 1e6;
           publication_pending = true;
           tv_set = true;
-          //ROS_INFO("Pub pending...");
+          //RCLCPP_INFO(node->get_logger(), "Pub pending...");
         }
 
         // If nothing is going on, start a timer to do autorepeat.
@@ -472,7 +467,7 @@ public:
           tv.tv_sec = trunc(autorepeat_interval);
           tv.tv_usec = (autorepeat_interval - tv.tv_sec) * 1e6;
           tv_set = true;
-          //ROS_INFO("Autorepeat pending... %li %li", tv.tv_sec, tv.tv_usec);
+          //RCLCPP_INFO(node->get_logger(), "Autorepeat pending... %li %li", tv.tv_sec, tv.tv_usec);
         }
 
         if (!tv_set)
@@ -487,11 +482,11 @@ public:
       close(joy_fd);
       rclcpp::spin_some(node);
       if (rclcpp::ok())
-        ROS_ERROR("Connection to joystick device lost unexpectedly. Will reopen.");
+        RCLCPP_ERROR(node->get_logger(), "Connection to joystick device lost unexpectedly. Will reopen.");
     }
 
   cleanup:
-    ROS_INFO("joy_node shut down.");
+    RCLCPP_INFO(node->get_logger(), "joy_node shut down.");
 
     return 0;
   }
