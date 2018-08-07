@@ -97,7 +97,7 @@ private:
   /*! \brief Returns the device path of the first joystick that matches joy_name.
    *         If no match is found, an empty string is returned.
    */
-  std::string get_dev_by_joy_name(const std::string& joy_name)
+  std::string get_dev_by_joy_name(const std::string& joy_name, rclcpp::Logger logger)
   {
     const char path[] = "/dev/input"; // no trailing / here
     struct dirent *entry;
@@ -106,7 +106,7 @@ private:
     DIR *dev_dir = opendir(path);
     if (dev_dir == NULL)
     {
-      RCUTILS_LOG_ERROR("Couldn't open %s. Error %i: %s.", path, errno, strerror(errno));
+      RCLCPP_ERROR(logger, "Couldn't open %s. Error %i: %s.", path, errno, strerror(errno));
       return "";
     }
 
@@ -132,7 +132,7 @@ private:
 
       close(joy_fd);
 
-      RCUTILS_LOG_INFO("Found joystick: %s (%s).", current_joy_name, current_path.c_str());
+      RCLCPP_INFO(logger, "Found joystick: %s (%s).", current_joy_name, current_path.c_str());
 
       if (strcmp(current_joy_name, joy_name.c_str()) == 0)
       {
@@ -172,7 +172,7 @@ public:
     // Checks on parameters
     if (!joy_dev_name_.empty())
     {
-        std::string joy_dev_path = get_dev_by_joy_name(joy_dev_name_);
+        std::string joy_dev_path = get_dev_by_joy_name(joy_dev_name_, node->get_logger());
         if (joy_dev_path.empty())
         {
             RCLCPP_ERROR(node->get_logger(), "Couldn't find a joystick with name %s. Falling back to default device.", joy_dev_name_.c_str());
