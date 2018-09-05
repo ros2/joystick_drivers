@@ -235,7 +235,7 @@ public:
 
     event_count_ = 0;
     pub_count_ = 0;
-    lastDiagTime_ = node->now().nanoseconds() / 1e9;
+    lastDiagTime_ = node->now().seconds();
 
     // Big while loop opens, publishes
     while (rclcpp::ok())
