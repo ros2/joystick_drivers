@@ -14,7 +14,8 @@
     joystick's buttons and axes.
   </description>
 
-  <maintainer email="mikael@osrfoundation.org">Mikael Arguedas</maintainer>
+  <maintainer email="clalancette@openrobotics.org">Chris Lalancette</maintainer>
+  <author>Mikael Arguedas</author>
   <author>Morgan Quigley</author>
   <author>Brian Gerkey</author>
   <author>Kevin Watts</author>
