@@ -2,6 +2,12 @@
 Changelog for package joy
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.3.0 (2019-05-20)
+------------------
+
+* Added LICENSE file. (`#10 <https://github.com/ros2/joystick_drivers/issues/10>`_)
+* Contributors: M. M
+
 1.12.0 (2018-06-11)
 -------------------
 * Update timestamp when using autorepeat_rate
