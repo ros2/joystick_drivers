@@ -161,13 +161,14 @@ public:
 
     // Parameters
     pub_ = node->create_publisher<sensor_msgs::msg::Joy>("joy", 10);
-    node->get_parameter_or("dev", joy_dev_, std::string("/dev/input/js0"));
-    node->get_parameter_or("dev_name", joy_dev_name_, std::string(""));
-    node->get_parameter_or("deadzone", deadzone_, 0.05);
-    node->get_parameter_or("autorepeat_rate", autorepeat_rate_, static_cast<double>(20));
-    node->get_parameter_or("coalesce_interval", coalesce_interval_, 0.001);
-    node->get_parameter_or("default_trig_val", default_trig_val_, false);
-    node->get_parameter_or("sticky_buttons", sticky_buttons_, false);
+
+    joy_dev_ = node->declare_parameter("dev", std::string("/dev/input/js0"));
+    joy_dev_name_ = node->declare_parameter("dev_name", std::string(""));
+    deadzone_ = node->declare_parameter("deadzone", 0.05);
+    autorepeat_rate_ = node->declare_parameter("autorepeat_rate", 20.0);
+    coalesce_interval_ = node->declare_parameter("coalesce_intervale", 0.001);
+    default_trig_val_ = node->declare_parameter("default_trig_val", false);
+    sticky_buttons_ = node->declare_parameter("sticky_buttons", false);
 
     // Checks on parameters
     if (!joy_dev_name_.empty())
