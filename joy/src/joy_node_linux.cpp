@@ -160,7 +160,7 @@ public:
     auto node = std::make_shared<rclcpp::Node>("joy_node");
 
     // Parameters
-    pub_ = node->create_publisher<sensor_msgs::msg::Joy>("joy");
+    pub_ = node->create_publisher<sensor_msgs::msg::Joy>("joy", 10);
     node->get_parameter_or("dev", joy_dev_, std::string("/dev/input/js0"));
     node->get_parameter_or("dev_name", joy_dev_name_, std::string(""));
     node->get_parameter_or("deadzone", deadzone_, 0.05);
@@ -432,10 +432,10 @@ public:
             for(size_t i=0; i < joy_msg->axes.size(); i++){
               sticky_buttons_joy_msg->axes[i] = joy_msg->axes[i];
             }
-            pub_->publish(sticky_buttons_joy_msg);
+            pub_->publish(*sticky_buttons_joy_msg);
           } else {
             joy_msg->header.stamp = clock->now();
-            pub_->publish(joy_msg);
+            pub_->publish(*joy_msg);
           }
 
           publish_now = false;
