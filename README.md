@@ -1,0 +1,1 @@
+This repository has been superseded by the ros2 branch of https://github.com/ros-drivers/joystick_drivers.  All further development should be directed there.  This repository is left here (archived) for historical purposes.
